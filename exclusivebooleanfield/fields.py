@@ -1,14 +1,8 @@
-from django.db import models, transaction
+from django.db import models
 from django.db.models import Q
 
 from six import string_types
 from six.moves import reduce
-
-
-try:
-    transaction_context = transaction.atomic
-except AttributeError:
-    transaction_context = transaction.commit_on_success
 
 
 class ExclusiveBooleanField(models.BooleanField):
@@ -56,12 +50,11 @@ class ExclusiveBooleanField(models.BooleanField):
             def reducer(left, right):
                 return left & Q(**{right: getattr(self, right)})
 
-            with transaction_context():
-                if getattr(self, field_name) is True:
-                    f_args = reduce(reducer, on_fields, Q())
-                    u_args = {field_name: False}
-                    sender._default_manager.filter(f_args).update(**u_args)
-                old_save(self, *args, **kwargs)
+            if getattr(self, field_name) is True:
+                f_args = reduce(reducer, on_fields, Q())
+                u_args = {field_name: False}
+                sender._default_manager.filter(f_args).update(**u_args)
+            old_save(self, *args, **kwargs)
         new_save.alters_data = True
 
         sender.save = new_save

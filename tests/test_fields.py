@@ -93,14 +93,3 @@ def test_shorthand():
     assert ShorthandModel.objects.filter(**filter_kwargs).count() == 1
     assert ShorthandModel.objects.get(**filter_kwargs).pk == models[2].pk
     assert ShorthandModel.objects.filter(value=2, the_one=True).count() == 1
-
-
-def test_atomic():
-    import django
-    from django.db import transaction
-    from exclusivebooleanfield.fields import transaction_context
-    # eg django.VERSION == (1, 4, 9, 'final', 0)
-    if django.VERSION[1] >= 6:
-        assert transaction_context == transaction.atomic
-    else:
-        assert transaction_context == transaction.commit_on_success
